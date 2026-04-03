@@ -31,17 +31,16 @@ def run ():
         "tpep_dropoff_datetime"
     ]
 
+    prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/'
+    url = f'{prefix}yellow_tripdata_{year}-{month:02d}.csv.gz'
+
+    # quick sample validation, use URL built from variables
     df = pd.read_csv(
-        prefix + 'yellow_tripdata_2021-01.csv.gz',
+        url,
         nrows=100,
         dtype=dtype,
         parse_dates=parse_dates
     )
-
-    prefix = 'https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/'
-    url = f'{prefix}'/'yellow_tripdata_{year}-{month:02d}.csv.gz'
-
-    engine = create_engine(f'postgresql+psycopg://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}')
 
     pg_user = 'root'
     pg_password = 'root'
@@ -50,7 +49,14 @@ def run ():
     pg_db = 'ny_taxi'
     target_table = 'yellow_taxi_data'
 
+    engine = create_engine(f'postgresql+psycopg://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}')
+
     first = True
+
+    df_iter = pd.read_csv(
+        url,
+        chunksize=chunksize
+    )
 
     for df_chunk in df_iter:
 
@@ -70,3 +76,6 @@ def run ():
             con=engine,
             if_exists="append"
         )
+
+if __name__ == "__main__":
+    run()
